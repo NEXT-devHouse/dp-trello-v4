@@ -1,1 +1,5 @@
-json\n{\n "routes": [\n { "src": "/(.*)", "dest": "api/index.js" }\n ]\n}\n
+{
+  "routes": [
+    { "src": "/(.*)", "dest": "api/index.js" }
+  ]
+}
