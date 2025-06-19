@@ -63,5 +63,4 @@ app.get('/mcp/boards/:boardId/cards', requireAuth, async (req, res) => {
 });
 
 // Start
-app.listen(PORT, () => console.log('Trello connector running'));
 module.exports = app;
