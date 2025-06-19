@@ -1,0 +1,23 @@
+openapi: 3.0.0
+info:
+  title: Trello Connector
+  version: 1.0.0
+paths:
+  /mcp/boards:
+    get:
+      summary: List boards
+      responses:
+        '200':
+          description: ok
+  /mcp/boards/{boardId}/cards:
+    get:
+      summary: List cards for board
+      parameters:
+        - in: path
+          name: boardId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ok
