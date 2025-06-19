@@ -1,0 +1,149 @@
+openapi: 3.0.0
+info:
+  title: Trello ChatGPT Connector
+  version: 1.1.0
+servers:
+- url: https://your-vercel-url.vercel.app
+paths:
+  /mcp/boards:
+    get:
+      summary: List Trello Boards
+      responses:
+        '200':
+          description: OK
+  /mcp/boards/{boardId}/lists:
+    get:
+      summary: List lists in board
+      parameters:
+      - in: path
+        name: boardId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+  /mcp/boards/{boardId}/cards:
+    get:
+      summary: List cards in board
+      parameters:
+      - in: path
+        name: boardId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+  /mcp/boards/{boardId}/lists/{listId}/cards:
+    post:
+      summary: Create card
+      parameters:
+      - in: path
+        name: boardId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: listId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                desc:
+                  type: string
+              required:
+              - name
+      responses:
+        '200':
+          description: OK
+  /mcp/cards/{cardId}/move:
+    post:
+      summary: Move card to list
+      parameters:
+      - in: path
+        name: cardId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                listId:
+                  type: string
+              required:
+              - listId
+      responses:
+        '200':
+          description: OK
+  /mcp/cards/{cardId}/assign:
+    post:
+      summary: Assign member to card
+      parameters:
+      - in: path
+        name: cardId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                memberId:
+                  type: string
+              required:
+              - memberId
+      responses:
+        '200':
+          description: OK
+  /mcp/boards/{boardId}/summary:
+    get:
+      summary: Board summary
+      parameters:
+      - in: path
+        name: boardId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+  /mcp/boards/{boardId}/due:
+    get:
+      summary: Due soon & overdue cards
+      parameters:
+      - in: path
+        name: boardId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+  /mcp/boards/{boardId}/assignments:
+    get:
+      summary: Workload per member
+      parameters:
+      - in: path
+        name: boardId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
