@@ -2,22 +2,43 @@ openapi: 3.0.0
 info:
   title: Trello Connector
   version: 1.0.0
+
+# Base URL of your MCP server
+servers:
+  - url: https://dp-trello-v41.vercel.app
+
 paths:
   /mcp/boards:
     get:
-      summary: List boards
+      summary: List Trello boards for the linked account
+      operationId: listBoards
       responses:
         '200':
-          description: ok
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
   /mcp/boards/{boardId}/cards:
     get:
-      summary: List cards for board
+      summary: List cards on a specific board
+      operationId: listCardsOnBoard
       parameters:
         - in: path
           name: boardId
           required: true
           schema:
             type: string
+          description: Trello board ID
       responses:
         '200':
-          description: ok
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
