@@ -68,7 +68,8 @@ module.exports = app;
 const path = require('path');
 
 // Serve the OpenAPI spec so ChatGPT can fetch it
-app.use('/openapi.yaml', express.static(path.join(__dirname, '..', 'openapi.yaml')));
+app.use('/openapi.yaml', express.static(path.join(__dirname, 'openapi.yaml')));
+
 
 // Required by MCP: list available tools
 app.get('/tools/list', (req, res) => {
