@@ -98,6 +98,15 @@ app.get('/tools/list', (req, res) => {
   ]);
 });
 
+// Single-tool metadata (ChatGPT calls this during connector save)
+app.get('/tools/trello', (req, res) => {
+  res.json({
+    name: 'trello',
+    description: 'Interact with Trello boards, cards and lists',
+    openapi: { url: `${process.env.BASE_URL}/openapi.yaml` }
+  });
+});
+
 // ──────────────────────────────────────────────────────────
 // Export the Express app (Vercel serverless runtime handles the listener)
 module.exports = app;
