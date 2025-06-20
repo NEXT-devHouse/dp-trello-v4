@@ -64,3 +64,23 @@ app.get('/mcp/boards/:boardId/cards', requireAuth, async (req, res) => {
 
 // Start
 module.exports = app;
+// at bottom of api/index.js  (already in canvas)
+const path = require('path');
+
+// Serve the OpenAPI spec so ChatGPT can fetch it
+app.use('/openapi.yaml', express.static(path.join(__dirname, '..', 'openapi.yaml')));
+
+// Required by MCP: list available tools
+app.get('/tools/list', (req, res) => {
+  res.json([
+    {
+      name: 'trello',
+      description: 'Interact with Trello boards, cards, and lists',
+      openapi: { url: `${process.env.BASE_URL}/openapi.yaml` }
+    }
+  ]);
+});
+
+// Export app (no app.listen)
+module.exports = app;
+
