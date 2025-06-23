@@ -3,14 +3,13 @@ info:
   title: Trello Connector
   version: 1.0.0
 
-# Base URL of your MCP server
 servers:
-  - url: https://dp-trello-v41.vercel.app
+  - url: https://dp-trello-v41.vercel.app   # update if you use a different host
 
 paths:
   /mcp/boards:
     get:
-      summary: List Trello boards for the linked account
+      summary: List Trello boards
       operationId: listBoards
       responses:
         '200':
@@ -18,27 +17,29 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
+                type: object
+                properties:
+                  boards:
+                    type: array
+                    items: { type: object }
 
   /mcp/boards/{boardId}/cards:
     get:
-      summary: List cards on a specific board
+      summary: List cards on a board
       operationId: listCardsOnBoard
       parameters:
         - in: path
           name: boardId
           required: true
-          schema:
-            type: string
-          description: Trello board ID
+          schema: { type: string }
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
+                type: object
+                properties:
+                  cards:
+                    type: array
+                    items: { type: object }
