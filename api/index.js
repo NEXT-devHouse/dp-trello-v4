@@ -1,14 +1,13 @@
-// Trello ChatGPT Connector – Extended Package (Vercel-ready)
-// o3 model compliant – includes analytics & reporting endpoints
+// Trello ChatGPT Connector – Fully MCP-Compliant Version (Vercel-ready)
 
 /*
 ENV VARS required on Vercel:
   TRELLO_KEY     – your Trello API key
-  TRELLO_SECRET  – your Trello API secret (kept for future OAuth-1 flow)
+  TRELLO_SECRET  – your Trello API secret (kept for future OAuth flow)
   BASE_URL       – full https root of the deployment (no trailing slash)
 
 Flow:
-  1. Deploy, then visit /auth once to link Trello for this deployment
+  1. Deploy, then visit /auth once to link Trello
   2. ChatGPT consumes the MCP endpoints declared in openapi.yaml
 */
 
@@ -23,22 +22,20 @@ const app = express();
 // ──────────────────────────────────────────────────────────
 // Middleware
 app.use(express.json());
-app.use(
-  session({
-    secret: 'trello-secret',
-    resave: false,
-    saveUninitialized: true
-  })
-);
+app.use(session({
+  secret: 'trello-secret',
+  resave: false,
+  saveUninitialized: true
+}));
 
 const API_BASE = 'https://api.trello.com/1';
 
 // ──────────────────────────────────────────────────────────
 // Helpers
-const trelloRequest = async (method, p, token, data = {}) => {
-  const url    = `${API_BASE}${p}`;
+const trelloRequest = async (method, path, token, data = {}) => {
+  const url = `${API_BASE}${path}`;
   const params = { key: process.env.TRELLO_KEY, token };
-  const res    = await axios({ method, url, params, data });
+  const res = await axios({ method, url, params, data });
   return res.data;
 };
 
@@ -66,47 +63,45 @@ app.get('/callback', (req, res) => {
 });
 
 // ──────────────────────────────────────────────────────────
-// MCP endpoints
+// MCP Endpoints
 app.get('/mcp/boards', requireAuth, async (req, res) => {
-  res.json(await trelloRequest('get', '/members/me/boards', req.session.trello_token));
+  const boards = await trelloRequest('get', '/members/me/boards', req.session.trello_token);
+  res.json({ boards }); // Wrapping in object to comply with MCP expectation
 });
 
 app.get('/mcp/boards/:boardId/cards', requireAuth, async (req, res) => {
   const { boardId } = req.params;
-  res.json(await trelloRequest('get', `/boards/${boardId}/cards`, req.session.trello_token));
+  const cards = await trelloRequest('get', `/boards/${boardId}/cards`, req.session.trello_token);
+  res.json({ cards }); // Wrapping in object to comply with MCP expectation
 });
 
 // ──────────────────────────────────────────────────────────
-// Discovery endpoints required by MCP spec
-
-// Serve the OpenAPI spec so ChatGPT can download it
+// Discovery Endpoints Required by MCP Spec
 app.get('/openapi.yaml', (req, res) => {
   res.type('yaml');
   res.sendFile(path.join(__dirname, 'openapi.yaml'));
 });
 
-// List available tools for this connector
 app.get('/tools/list', (req, res) => {
+  const host = `${req.protocol}://${req.get('host')}`;
   res.json([
     {
       name: 'trello',
       description: 'Interact with Trello boards, cards and lists',
-      openapi: {
-        url: `${process.env.BASE_URL}/openapi.yaml`
-      }
+      openapi: { url: `${host}/openapi.yaml` }
     }
   ]);
 });
 
-// Single-tool metadata (ChatGPT calls this during connector save)
 app.get('/tools/trello', (req, res) => {
+  const host = `${req.protocol}://${req.get('host')}`;
   res.json({
     name: 'trello',
     description: 'Interact with Trello boards, cards and lists',
-    openapi: { url: `${process.env.BASE_URL}/openapi.yaml` }
+    openapi: { url: `${host}/openapi.yaml` }
   });
 });
 
 // ──────────────────────────────────────────────────────────
-// Export the Express app (Vercel serverless runtime handles the listener)
+// Export the Express app
 module.exports = app;
