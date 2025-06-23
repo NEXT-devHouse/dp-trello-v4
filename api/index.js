@@ -1,15 +1,4 @@
-// Trello ChatGPT Connector – Fully MCP-Compliant Version (Vercel-ready)
-
-/*
-ENV VARS required on Vercel:
-  TRELLO_KEY     – your Trello API key
-  TRELLO_SECRET  – your Trello API secret (kept for future OAuth flow)
-  BASE_URL       – full https root of the deployment (no trailing slash)
-
-Flow:
-  1. Deploy, then visit /auth once to link Trello
-  2. ChatGPT consumes the MCP endpoints declared in openapi.yaml
-*/
+// Trello ChatGPT Connector – Fully MCP-Compliant (Vercel-ready)
 
 const express = require('express');
 const axios   = require('axios');
@@ -18,36 +7,23 @@ const path    = require('path');
 require('dotenv').config();
 
 const app = express();
-
-// ──────────────────────────────────────────────────────────
-// Middleware
 app.use(express.json());
-app.use(session({
-  secret: 'trello-secret',
-  resave: false,
-  saveUninitialized: true
-}));
+app.use(session({ secret: 'trello-secret', resave: false, saveUninitialized: true }));
 
 const API_BASE = 'https://api.trello.com/1';
 
-// ──────────────────────────────────────────────────────────
-// Helpers
-const trelloRequest = async (method, path, token, data = {}) => {
-  const url = `${API_BASE}${path}`;
+// ── helpers ───────────────────────────────────────────────
+const trelloRequest = async (method, p, token, data = {}) => {
+  const url    = `${API_BASE}${p}`;
   const params = { key: process.env.TRELLO_KEY, token };
-  const res = await axios({ method, url, params, data });
+  const res    = await axios({ method, url, params, data });
   return res.data;
 };
 
-const requireAuth = (req, res, next) => {
-  if (!req.session.trello_token) {
-    return res.status(401).send('Not authenticated. Visit /auth to link Trello.');
-  }
-  next();
-};
+const requireAuth = (req, res, next) =>
+  req.session.trello_token ? next() : res.status(401).send('Not authenticated. Visit /auth');
 
-// ──────────────────────────────────────────────────────────
-// OAuth (token-only, no secret)
+// ── OAuth flow ────────────────────────────────────────────
 app.get('/auth', (req, res) => {
   const redirect = `${process.env.BASE_URL}/callback`;
   const url =
@@ -62,46 +38,34 @@ app.get('/callback', (req, res) => {
   res.send('✅ Trello linked. You can close this tab.');
 });
 
-// ──────────────────────────────────────────────────────────
-// MCP Endpoints
+// ── MCP endpoints ─────────────────────────────────────────
 app.get('/mcp/boards', requireAuth, async (req, res) => {
   const boards = await trelloRequest('get', '/members/me/boards', req.session.trello_token);
-  res.json({ boards }); // Wrapping in object to comply with MCP expectation
+  res.json({ boards });                        // <-- wrapped in object
 });
 
 app.get('/mcp/boards/:boardId/cards', requireAuth, async (req, res) => {
-  const { boardId } = req.params;
-  const cards = await trelloRequest('get', `/boards/${boardId}/cards`, req.session.trello_token);
-  res.json({ cards }); // Wrapping in object to comply with MCP expectation
+  const cards = await trelloRequest(
+    'get',
+    `/boards/${req.params.boardId}/cards`,
+    req.session.trello_token
+  );
+  res.json({ cards });                         // <-- wrapped in object
 });
 
-// ──────────────────────────────────────────────────────────
-// Discovery Endpoints Required by MCP Spec
+// ── Discovery endpoints ──────────────────────────────────
 app.get('/openapi.yaml', (req, res) => {
   res.type('yaml');
   res.sendFile(path.join(__dirname, 'openapi.yaml'));
 });
 
-app.get('/tools/list', (req, res) => {
-  const host = `${req.protocol}://${req.get('host')}`;
-  res.json([
-    {
-      name: 'trello',
-      description: 'Interact with Trello boards, cards and lists',
-      openapi: { url: `${host}/openapi.yaml` }
-    }
-  ]);
+const toolJson = req => ({
+  name: 'trello',
+  description: 'Interact with Trello boards, cards and lists',
+  openapi: { url: `${req.protocol}://${req.get('host')}/openapi.yaml` }
 });
 
-app.get('/tools/trello', (req, res) => {
-  const host = `${req.protocol}://${req.get('host')}`;
-  res.json({
-    name: 'trello',
-    description: 'Interact with Trello boards, cards and lists',
-    openapi: { url: `${host}/openapi.yaml` }
-  });
-});
+app.get('/tools/list',  (req, res) => res.json([toolJson(req)]));
+app.get('/tools/trello', (req, res) => res.json(toolJson(req)));
 
-// ──────────────────────────────────────────────────────────
-// Export the Express app
-module.exports = app;
+module.exports = app;  // Vercel handles the listener
